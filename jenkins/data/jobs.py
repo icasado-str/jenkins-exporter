@@ -4,17 +4,17 @@ import math
 from datetime import datetime
 
 API_SUFFIX = '/api/json'
-MAX_TREE_DEGREE = 10
+MAX_TREE_DEGREE = 7
 
 PIPELINE = "org.jenkinsci.plugins.workflow.job.WorkflowJob"
 MULTIBRANCH = \
     "org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject"
 FOLDER = "com.cloudbees.hudson.plugins.folder.Folder"
 ORGANIZATION_FOLDER = 'jenkins.branch.OrganizationFolder'
-MAX_GET_BUILDS = 12
-BUILDS_LABELS = 'number,result'
-LAST_BUILD_LABELS = 'number,result,building,timestamp'
-JOB_LABELS = '_class,fullName,color'
+MAX_GET_BUILDS = 15
+BUILDS_LABELS = 'number,result,building,timestamp,duration,estimatedDuration,displayName,fullDisplayName'
+LAST_BUILD_LABELS = 'number,result,building,timestamp,duration,estimatedDuration,displayName,fullDisplayName'
+JOB_LABELS = '_class,fullName,color,buildable,inQueue,queueItem'
 
 
 class Jobs(object):
