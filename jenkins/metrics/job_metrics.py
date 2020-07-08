@@ -142,7 +142,7 @@ def make_metrics(jobs):
             metric.add_metric(
                 labels=[job_id, last_build['result'], str(last_build['number']), str(last_build['estimatedDuration']),
                         str(last_build['duration']), last_build["displayName"], last_build['fullDisplayName']],
-                value=(duration / last_build['estimatedDuration']) * 100
+                value=(duration / last_build['estimatedDuration']) * 100 - 100
             )
         else:
             if jobs.get_total_builds(job_id) == 0:
@@ -155,8 +155,58 @@ def make_metrics(jobs):
                 metric.add_metric(
                     labels=[job_id, 'BUILDING', str(last_build['number']), str(last_build['estimatedDuration']),
                             str(last_build['duration']), last_build["displayName"], last_build['fullDisplayName']],
-                    value=(current_milli_time() - last_build['timestamp']) / last_build['estimatedDuration'] * 100
+                    value=(current_milli_time() - last_build['timestamp']) / last_build['estimatedDuration'] * 100 - 100
                 )
+
+    list_metrics.append(metric)
+
+    # Builds by repo
+    metric = None
+    metric = GaugeMetricFamily(
+        'jenkins_builds_by_repo_and_tenant',
+        'The number of jobs by repo and tenant',
+        labels=['job_name', 'status']
+    )
+
+    for job_id in list_jobs:
+        job = jobs.get_job(job_id)
+        builds = job['builds']['info']
+        aborted = sum(map(lambda x: x['result'] == "ABORTED", builds))
+        success = sum(map(lambda x: x['result'] == "SUCCESS" and not x['building'], builds))
+        success_but_waiting_to_response = sum(map(lambda x: x['result'] == "SUCCESS" and x['building'], builds))
+        failure = sum(map(lambda x: x['result'] == "FAILURE", builds))
+        not_built = sum(map(lambda x: x['result'] == "NOT_BUILT", builds))
+        building = sum(map(lambda x: x['building'] and x['result'] is None, builds))
+        total = len(builds)
+        if total > 0:
+            metric.add_metric(
+                labels=[job_id, 'ABORTED'],
+                value=aborted
+            )
+            metric.add_metric(
+                labels=[job_id, 'SUCCESS'],
+                value=success
+            )
+            metric.add_metric(
+                labels=[job_id, 'WAITING_TO_RESPONSE'],
+                value=success_but_waiting_to_response
+            )
+            metric.add_metric(
+                labels=[job_id, 'FAILURE'],
+                value=failure
+            )
+            metric.add_metric(
+                labels=[job_id, 'BUILDING'],
+                value=building
+            )
+            metric.add_metric(
+                labels=[job_id, 'NOT_BUILT'],
+                value=not_built
+            )
+            metric.add_metric(
+                labels=[job_id, 'TOTAL'],
+                value=total
+            )
 
     list_metrics.append(metric)
     return list_metrics
