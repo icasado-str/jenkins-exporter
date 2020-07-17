@@ -174,7 +174,7 @@ def make_metrics(jobs):
 
     list_metrics.append(metric)
 
-    # Builds by repo
+    # Builds by repo in the last 24 hours
     metric = None
     metric = GaugeMetricFamily(
         'jenkins_builds_by_repo_and_tenant_last24h',
@@ -219,6 +219,31 @@ def make_metrics(jobs):
                 labels=[job_id, 'NOT_BUILT', tenant, repo, branch],
                 value=not_built
             )
+
+    list_metrics.append(metric)
+
+    # Success builds by repo and branch
+    metric = None
+    metric = GaugeMetricFamily(
+        'jenkins_success_builds_by_tenant_repo_and_branch',
+        'The number of success builds by tenant, repo and branch',
+        labels=['job_name', 'status', 'tenant', 'repo', 'branch']
+    )
+
+    for job_id in list_jobs:
+        job = jobs.get_job(job_id)
+        splitted_full_name = job['full_name'].split("/")
+        tenant = splitted_full_name[0]
+        repo = splitted_full_name[1]
+        branch = splitted_full_name[2]
+        builds = job['builds']['info']
+        success = sum(map(lambda x: x['result'] == "SUCCESS", builds))
+
+        # If we have builds during the last week we add its stats
+        metric.add_metric(
+            labels=[job_id, 'SUCCESS', tenant, repo, branch],
+            value=success
+        )
 
     list_metrics.append(metric)
 
